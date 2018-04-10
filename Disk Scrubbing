@@ -1,0 +1,41 @@
+--http://www.oracle.com/technetwork/pt/articles/database-performance/disk-scrubbing-3758877-ptb.html
+--FAQ : EXADATA HardDisk Scrubbing (Doc ID 2094581.1)
+
+ommand to check the Harddisks activity checked in Oracle Exadata:
+
+[celladmin @ CellServer01 ~] $ cellcli -e list cell 
+attributes name, hardDiskScrubInterval
+         CellServer01 biweekly
+
+[celladmin @ CellServer02 ~] $ cellcli -e list cell 
+attributes name, hardDiskScrubInterval
+         CellServer02 biweekly
+
+[celladmin @ CellServer03 ~] $ cellcli -e list cell 
+attributes name, hardDiskScrubInterval
+CellServer03 biweekly
+
+Command to disable Harddiskscrubno activity Oracle Exadata:
+
+[celladmin @ CellServer01 ~] $ cellcli -e alter 
+cell hardDiskScrubInterval = none
+[celladmin @ CellServer02 ~] $ cellcli -e alter 
+cell hardDiskScrubInterval = none
+[celladmin @ CellServer03 ~] $ cellcli -e alter 
+cell hardDiskScrubInterval = none
+
+
+When to schedule:
+
+The Disk scrubbing activity will consume I / O when running on the storage servers, so there will be a small load on the Oracle Database. Before running disk scrubbing in a free window (idle period) for a mission-critical production database. Check the steps below to schedule that at the planned time:
+
+For disk scrubbing and then resets it to a period that does not have I / O peaks.
+
+CellCLI> ALTER CELL hardDiskScrubInterval = none
+Please decide when ohardDiskScrubStartTimed will start, the entire weekend / period of least activity and configure properly.
+
+CellCLI> ALTER CELL hardDiskScrubStartTime = '<Set date and time>'
+
+Change the interval to BIWEEKLY if the previous action plan was implemented to stop the disk scrub.
+
+CellCLI> ALTER CELL hardDiskScrubInterval = biweekly
