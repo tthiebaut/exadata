@@ -1,5 +1,6 @@
 --http://www.oracle.com/technetwork/pt/articles/database-performance/disk-scrubbing-3758877-ptb.html
 --FAQ : EXADATA HardDisk Scrubbing (Doc ID 2094581.1)
+--Disk Scrubbing causing I/O Performance issue on Exadata Cell Server (Doc ID 1684213.1)
 
 ommand to check the Harddisks activity checked in Oracle Exadata:
 
