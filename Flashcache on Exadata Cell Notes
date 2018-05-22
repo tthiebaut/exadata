@@ -1,0 +1,5 @@
+
+--https://mehmeteser.wordpress.com/2013/11/18/flashcache-on-exadata-cell-notes/
+list metriccurrent FC_BY_USED,FC_BYKEEP_USED,FC_BY_DIRTY
+dcli -g cell_group -l root cellcli -e "list metriccurrent FC_BY_USED,FC_BYKEEP_USED,FC_BY_DIRTY "
+list cell attributes flashCacheMode detail
