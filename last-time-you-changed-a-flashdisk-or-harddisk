@@ -1,0 +1,4 @@
+--When is the last time you changed a flashdisk or harddisk on Exadata 
+--https://mehmeteser.wordpress.com/2014/06/02/when-is-the-last-time-you-changed-a-flashdisk-or-harddisk-on-exadata/
+
+dcli -g cellnodes.txt  -l root "cellcli -e list physicaldisk  attributes name,diskType,physicalInsertTime " | sort -k 4
