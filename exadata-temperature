@@ -1,0 +1,5 @@
+--https://mehmeteser.wordpress.com/2013/11/27/monitor-exadata-temperature/
+
+ipmitool sensor list | grep degree | grep T_AMB
+dcli -g /root/all_group -l root ipmitool sensor list | grep degree | grep T_AMB
+dcli -g /opt/oracle.SupportTools/onecommand/all_group -l root 'ipmitool sunoem cli "show /SYS/T_AMB" | grep value'
