@@ -1,0 +1,20 @@
+--Software Patch Mismatch After Applying Bundle Patch or PSU on Grid Home and the Cluster Upgrade State is [ROLLING PATCH] (Doc ID 2176790.1)
+
+[root@db01 ~]# /u01/app/12.1.0.2/grid/bin/crsctl query crs activeversion -f
+Oracle Clusterware active version on the cluster is [12.1.0.2.0]. The cluster upgrade state is [ROLLING PATCH]. The cluster active patch level is [1653812242].
+
+[root@db02 ~]# /u01/app/12.1.0.2/grid/bin/crsctl query crs activeversion -f
+Oracle Clusterware active version on the cluster is [12.1.0.2.0]. The cluster upgrade state is [ROLLING PATCH]. The cluster active patch level is [1653812242].
+
++ASM1@db01 > kfod op=patches
++ASM2@db02 > kfod op=patches
+
+Running rootcrs.pl again does not help
+$GI_HOME/crs/install/rootcrs.pl -prepatch
+$GI_HOME/crs/install/rootcrs.pl -postpatch
+If patches reported by kfod op=patches are same on all nodes, try the following commands one at a time and check status
+$GI_HOME/bin/clscfg -patch
+$GI_HOME/bin/crsctl stop rollingpatch
+
+---check also
+ASMCMD> showclusterstate
