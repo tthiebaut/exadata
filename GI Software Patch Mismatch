@@ -16,5 +16,7 @@ If patches reported by kfod op=patches are same on all nodes, try the following 
 $GI_HOME/bin/clscfg -patch
 $GI_HOME/bin/crsctl stop rollingpatch
 
+crsctl query crs softwarepatch
+
 ---check also
 ASMCMD> showclusterstate
