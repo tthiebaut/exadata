@@ -1,7 +1,6 @@
 --Software Patch Mismatch After Applying Bundle Patch or PSU on Grid Home and the Cluster Upgrade State is [ROLLING PATCH] (Doc ID 2176790.1)
 --https://stefanpanek.wordpress.com/2015/09/26/ora-15137-asm-cluster-in-rolling-patch-mode-new-disk-cant-be-rebalanced/
 --ORA-15137 after rolling back failed patch at GI_HOME (Doc ID 1968727.1)
---https://stefanpanek.wordpress.com/2015/09/26/ora-15137-asm-cluster-in-rolling-patch-mode-new-disk-cant-be-rebalanced/
 
 [root@db01 ~]# /u01/app/12.1.0.2/grid/bin/crsctl query crs activeversion -f
 Oracle Clusterware active version on the cluster is [12.1.0.2.0]. The cluster upgrade state is [ROLLING PATCH]. The cluster active patch level is [1653812242].
