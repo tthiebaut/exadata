@@ -1,0 +1,104 @@
+begin
+  sys.dbms_resource_manager.clear_pending_area();
+  sys.dbms_resource_manager.create_pending_area();
+  sys.dbms_resource_manager.delete_plan_cascade ('DSS_RESOURCE_PLAN');
+  sys.dbms_resource_manager.submit_pending_area();
+end;
+/
+
+begin
+  sys.dbms_resource_manager.clear_pending_area();
+  sys.dbms_resource_manager.create_pending_area();
+  sys.dbms_resource_manager.create_plan (
+      plan                         => 'DSS_RESOURCE_PLAN'
+     ,cpu_mth                      => 'EMPHASIS'
+     ,active_sess_pool_mth         => 'ACTIVE_SESS_POOL_ABSOLUTE'
+     ,parallel_degree_limit_mth    => 'PARALLEL_DEGREE_LIMIT_ABSOLUTE'
+     ,queueing_mth                 => 'FIFO_TIMEOUT'
+     ,comment                      => 'Example plan for DSS workloads that prioritizes ETL and critical DSS queries.');
+  sys.dbms_resource_manager.create_consumer_group (
+      consumer_group               => 'THIRD_PARTY_GROUP'
+     ,comment                      => 'HYPERION v.s. groups');
+  sys.dbms_resource_manager.create_plan_directive (
+      plan                         => 'DSS_RESOURCE_PLAN'
+     ,group_or_subplan             => 'THIRD_PARTY_GROUP'
+     ,cpu_p6                       => 100
+     ,switch_estimate              => FALSE
+     ,parallel_degree_limit_p1     => 1
+     ,comment                      => NULL  );
+  sys.dbms_resource_manager.create_plan_directive (
+      plan                         => 'DSS_RESOURCE_PLAN'
+     ,group_or_subplan             => 'OTHER_GROUPS'
+     ,cpu_p7                       => 100
+     ,switch_group                 => 'KILL_SESSION'
+     ,switch_time                  => 3600
+     ,switch_estimate              => FALSE
+     ,parallel_degree_limit_p1     => 8
+     ,comment                      => 'Directive for unclassified activity'  );
+  sys.dbms_resource_manager.create_consumer_group (
+      consumer_group               => 'DSS_GROUP'
+     ,comment                      => 'Consumer group for DSS queries');
+  sys.dbms_resource_manager.create_plan_directive (
+      plan                         => 'DSS_RESOURCE_PLAN'
+     ,group_or_subplan             => 'DSS_GROUP'
+     ,cpu_p1                       => 10
+     ,cpu_p2                       => 30
+     ,cpu_p3                       => 70
+     ,switch_estimate              => FALSE
+     ,parallel_degree_limit_p1     => 8
+     ,comment                      => 'Directive for DSS_GROUP'  );
+  sys.dbms_resource_manager.create_consumer_group (
+      consumer_group               => 'DSS_GROUP1'
+     ,comment                      => 'Consumer group for DSS queries');
+  sys.dbms_resource_manager.create_plan_directive (
+      plan                         => 'DSS_RESOURCE_PLAN'
+     ,group_or_subplan             => 'DSS_GROUP1'
+     ,cpu_p1                       => 30
+     ,cpu_p2                       => 20
+     ,switch_estimate              => FALSE
+     ,parallel_degree_limit_p1     => 32
+     ,comment                      => NULL  );
+  sys.dbms_resource_manager.create_consumer_group (
+      consumer_group               => 'ETL_GROUP'
+     ,comment                      => 'Consumer group for ETL');
+  sys.dbms_resource_manager.create_plan_directive (
+      plan                         => 'DSS_RESOURCE_PLAN'
+     ,group_or_subplan             => 'ETL_GROUP'
+     ,cpu_p2                       => 50
+     ,cpu_p4                       => 100
+     ,switch_estimate              => FALSE
+     ,parallel_degree_limit_p1     => 32
+     ,comment                      => 'Directive for ETL_GROUP'  );
+  sys.dbms_resource_manager.create_consumer_group (
+      consumer_group               => 'LOW_GROUP'
+     ,comment                      => 'Consumer group for low-priority sessions');
+  sys.dbms_resource_manager.create_plan_directive (
+      plan                         => 'DSS_RESOURCE_PLAN'
+     ,group_or_subplan             => 'LOW_GROUP'
+     ,cpu_p8                       => 100
+     ,switch_group                 => 'KILL_SESSION'
+     ,switch_time                  => 3600
+     ,switch_estimate              => FALSE
+     ,parallel_degree_limit_p1     => 4
+     ,comment                      => NULL  );
+  sys.dbms_resource_manager.create_consumer_group (
+      consumer_group               => 'DEVELOPER_GROUP'
+     ,comment                      => 'DWH developer users');
+  sys.dbms_resource_manager.create_plan_directive (
+      plan                         => 'DSS_RESOURCE_PLAN'
+     ,group_or_subplan             => 'DEVELOPER_GROUP'
+     ,cpu_p5                       => 100
+     ,switch_estimate              => FALSE
+     ,parallel_degree_limit_p1     => 4
+     ,comment                      => NULL  );
+  sys.dbms_resource_manager.create_plan_directive (
+      plan                         => 'DSS_RESOURCE_PLAN'
+     ,group_or_subplan             => 'SYS_GROUP'
+     ,cpu_p1                       => 60
+     ,cpu_p3                       => 30
+     ,switch_estimate              => FALSE
+     ,parallel_degree_limit_p1     => 128
+     ,comment                      => 'Directive for SYS_GROUP'  );
+  sys.dbms_resource_manager.submit_pending_area();
+end;
+/
