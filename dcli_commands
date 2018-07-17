@@ -1,0 +1,5 @@
+
+--find db running on nodes.
+/usr/local/bin/dcli -g /home/oracle/dbs_group -l oracle  ps -ef|grep pmon
+
+dcli -l oracle -g dbs_group "/u01/app/oracle/product/11.2.0.4/dbhome_1/OPatch/opatch lspatches|grep 26260557"
