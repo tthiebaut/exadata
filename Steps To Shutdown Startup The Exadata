@@ -1,0 +1,66 @@
+
+--https://oracledba.blogspot.com/2018/07/steps-to-shutdown-startup-exadata.html
+
+ShutDown
+Log in to the first database server as root.
+Change to the OneCommand directory
+# cd /opt/oracle.SupportTools/onecommand
+Note whether the Grid Infrastructure is currently enabled for autostart, so that this state can be restored later:
+# dcli -g dbs_group -l root /u01/app/12.1.0.2/grid/bin/crsctl config crs
+Disable the Grid Infrastructure for autostart on the database servers if the previous step indicated it is currently enabled for autostart.
+# dcli -g dbs_group -l root /u01/app/12.1.0.2/grid/bin/crsctl disable crs
+Note: This is step is [Optional] and it can required during maintenance operation like “firmware patches” which requires to reboot the Compute Node several times.
+Stop the Grid Infrastructure stack on the database servers (compute nodes):
+# dcli -g dbs_group -l root "/u01/app/12.1.0.2/grid/bin/crsctl stop crs"
+Verify that the Grid Infrastructure stack has shutdown successfully on the database servers. The following command should show no output if the GI stack has shutdown:
+# dcli -g dbs_group -l root "ps -ef | grep diskmo[n]"
+[Optional] Disable email/SNMP alerts if applicable. If alerts will be enabled, first note the notification method in use so that it can be restored later. The following command will show the current notification method:
+# dcli -g cell_group -l root "su - celladmin -c \"cellcli -e list cell attributes name,notificationMethod\""
+Now set the notification method to null to disable alerts:
+# dcli -g cell_group -l root "su - celladmin -c \"cellcli -e alter cell notificationMethod=null\""
+Shutdown all the cells:
+# dcli -g cell_group -l root "su - celladmin -c \"cellcli -e alter cell shutdown services all \""
+Power off all cells:
+# dcli -g cell_group -l root poweroff
+Copy the /opt/oracle.SupportTools/onecommand/dbs_group to /opt/oracle.SupportTools/onecommand/dbs_group2:
+# cp /opt/oracle.SupportTools/onecommand/dbs_group /opt/oracle.SupportTools/onecommand/dbs_group2
+Remove the “first compute node name” from the /opt/oracle.SupportTools/onecommand/dbs_group2 file (using any editor, e.g. vi).
+Power off all the compute nodes (except compute node # 1):
+# dcli -g dbs_group2 -l root poweroff
+Power off the compute node #1:
+# poweroff
+Now, both Cell Servers & Compute nodes are down for maintenance.
+Startup
+Power “compute node #1” on, by using the power button on the front panel of the Exadata Storage Servers.
+Change to the OneCommand directory
+# cd /opt/oracle.SupportTools/onecommand
+Power the cells on, either by using the power button on the front panel of the Exadata Storage Servers, or by executing the following script from the first database server (from Compute node #1):
+for host in `cat cell_group`; do
+echo ${host}: `ipmitool -H ${host}-ilom -U root -P welcome1 chassis power on`
+done
+Wait until all the Cell servers are up, then power the compute nodes on, either by using the power button on the front panel of the Exadata Storage Servers, or by executing the following script from the first database server:
+for host in `cat dbs_group2`; do
+echo ${host}: `ipmitool -H ${host}-ilom -U root -P welcome1 chassis power on`
+done
+Verify that all Exadata Storage Servers have booted successfully:
+# dcli -g cell_group -l root hostname
+Verify all the cells are up (MS, RS & CELLSRV services must be running):
+# dcli -g cell_group -l root "su - celladmin -c \"cellcli -e list cell detail \""
+Reenable email/SNMP alerts if they were disabled during the pre-maintenance steps. The example below illustrates the command to use if both email and SMTP alerting used, but adjust the command as necessary to restore the notification method noted during the pre-maintenance steps.
+# dcli -g cell_group -l root "su - celladmin -c \"cellcli -e alter cell notificationMethod=\'mail,snmp\'\""
+Start the Grid Infrastructure stack on the first database server
+# /u01/app/12.1.0.2/grid/bin/crsctl start crs
+Wait until the Grid Infrastructure stack has started successfully on the first database server. To check the status of the Grid Infrastructure stack, run the following command and verify that the “ora.asm” instance is started. Note that the command below will continue to report that it is unable to communicate with the Grid Infrastructure software for several minutes after issuing the “crsctl start crs” command above:
+# /u01/app/12.1.0.2/grid/bin/crsctl status resource -t
+Start the Grid Infrastructure stack on all remaining database servers with a 1-minute delay between servers. Note that the command below will issue the start command for all database servers, including the first database server where it is already started. The output for the first server will therefore indicate that the software is already started, but this message can be safely ignored:
+for h in `cat dbs_group2`; do
+echo "Starting CRS on host $h"
+ssh $h /u01/app/12.1.0.2/grid/bin/crsctl start crs
+echo "Waiting 60 seconds…"
+sleep 60
+done
+Monitor the startup progress (this could take several minutes):
+# /u01/app/12.1.0.2/grid/bin/crsctl status resource -t
+Reenable the Grid Infrastructure for autostart if it was found to be enabled for autostart at the beginning of the pre-maintenance steps.
+# dcli -g dbs_group -l root /u01/app/12.1.0.2/grid/bin/crsctl enable crs
+Note: If dcli/ssh is not enabled due to security reasons, then you will need to connect and execute the above steps on each node at the time.
