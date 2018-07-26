@@ -1,0 +1,2 @@
+--Script to Collect Exadata Cell Performance Information (cellperfdiag.sql) (Doc ID 2038493.1)
+--https://fatdba.com/2018/07/22/collecting-exadata-cell-performance-statistics-using-cellperfdiag-sql/
