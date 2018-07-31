@@ -1,0 +1,10 @@
+
+Sadece  root dizinindeki kullanımı görmek için.
+
+-- find only root fs usage.
+
+#du -k -x / | sort -rn | more
+
+
+ExaWatcherCleanup Not Running And Out Of Diskspace On "/" (Doc ID 1901197.1)	 
+ 
