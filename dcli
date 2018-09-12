@@ -1,0 +1,6 @@
+
+/usr/local/bin/dcli -g /home/oracle/dbs_group -l oracle  'df -h /u01'
+/usr/local/bin/dcli -g /home/oracle/dbs_group -l oracle ps -ef|grep pmon
+dcli -g cell_group -l root "imageinfo" 
+dcli -l root -g cell_group cellcli -e list cell detail |grep flashCacheMode
+dcli -l oracle -g dbs_group "/u01/app/oracle/product/12.2.0/dbhome_1/OPatch/opatch lspatches"
