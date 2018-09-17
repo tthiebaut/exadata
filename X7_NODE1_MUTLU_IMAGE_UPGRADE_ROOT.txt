@@ -1,0 +1,174 @@
+Node1:
+886  2018-09-15.05:59:44 ibhosts
+
+  887  2018-09-15.06:06:28 dcli -g cell_group -l root cellcli -e "LIST GRIDDISK ATTRIBUTES name WHERE asmdeactivationoutcome != 'Yes'"
+
+  888  2018-09-15.06:06:35 dcli -g cell_group -l root 'hostname -i'
+
+  889  2018-09-15.06:06:41 dcli -l root -g all_group "/opt/oracle.cellos/ipconf -verify"
+
+  890  2018-09-15.06:06:48 dcli -g all_group -l root "rpm -qa |wc -l"
+
+  891  2018-09-15.06:07:21 dcli -g dbs_group -l root "/u01/app/12.2.0.1/grid/bin/crsctl disable crs"
+
+  892  2018-09-15.06:07:29 dcli -g cell_group -l root cellcli -e "list alerthistory"
+
+  893  2018-09-15.06:07:37 dcli -g all_group -l root /usr/bin/ipmitool sunoem cli "'reset -script /SP'"  
+
+  894  2018-09-15.06:07:46 dcli -l root -g cell_group imageinfo | grep Kernel
+
+  895  2018-09-15.06:07:48 dcli -l root -g cell_group imageinfo | grep 'Cell version'
+
+  896  2018-09-15.06:07:50 dcli -l root -g cell_group imageinfo | grep 'usb'
+
+  897  2018-09-15.06:07:52 dcli -l root -g cell_group imageinfo | grep 'status'
+
+  898  2018-09-15.06:07:54 dcli -l root -g cell_group imageinfo | grep 'Active image version'
+
+  899  2018-09-15.06:08:27 dcli -g dbs_group -l root "/u01/app/12.1.0.2/grid/bin/crsctl stop crs -f"
+
+  900  2018-09-15.06:08:56 dcli -g dbs_group -l root "/u01/app/12.2.0.1/grid/bin/crsctl stop crs -f"
+
+  901  2018-09-15.06:09:43 dcli -g cell_group -l root "cellcli -e alter cell validate configuration"
+
+  902  2018-09-15.06:10:59 dcli -g cell_group -l root "cellcli -e alter cell validate configuration"
+
+  903  2018-09-15.06:12:21 dcli -g dbs_group -l root "ps -ef | grep grid" 
+
+  904  2018-09-15.06:12:30 dcli -g dbs_group -l root "ps -ef | grep d.bin"
+
+  905  2018-09-15.06:12:53 dcli -g cell_group -l root "cellcli -e alter cell shutdown services all"
+
+  906  2018-09-15.06:13:04 dcli -g cell_group -l root "service celld status"
+
+  907  2018-09-15.06:13:11 dcli -g cell_group -l root "shutdown -F -r now" 
+
+  908  2018-09-15.06:15:52  dcli -l root -g ib_list -k
+
+  909  2018-09-15.06:16:37 su - oracler
+
+  910  2018-09-15.06:13:28 ping alzx7celadm01
+
+  911  2018-09-15.06:20:31 dcli -g cell_group -l root "hostname -i" 
+
+  912  2018-09-15.06:20:51 cd /u01/patches/18.1.6.0.0/Cell_node/patch_18.1.6.0.0.180820/
+
+  913  2018-09-15.06:20:52 ls -ltr
+
+  914  2018-09-15.06:20:57 ./patchmgr -cells cell_group -reset_force 
+
+  915  2018-09-15.06:21:04 ./patchmgr -cells cell_group -cleanup
+
+  916  2018-09-15.06:22:00 cd /u01/app/oracle/product/
+
+  917  2018-09-15.06:22:01 ls -ltr
+
+  918  2018-09-15.06:22:12 rm -Rf 12.2.0.1_backup_15092018
+
+  919  2018-09-15.06:22:23 cp -p -r 12.2.0.1/ 12.2.0.1_backup_15092018
+
+  920  2018-09-15.06:21:13 ./patchmgr -cells cell_group -patch_check_prereq
+
+  921  2018-09-15.06:22:53 dcli -g cell_group -l root "cellcli -e alter cell shutdown services all"
+
+  922  2018-09-15.06:23:19 nohup ./patchmgr -cells cell_group -cleanup > clean_15092018.log &
+
+  923  2018-09-15.06:23:23 tail -f clean_15092018.log 
+
+  924  2018-09-15.06:24:27 nohup ./patchmgr -cells cell_group -patch > IU_15092018.log &
+
+  925  2018-09-15.06:31:17 ibhosts
+
+  926  2018-09-15.07:02:43 cd /u01/patches/12201/BP_180717/28183653
+
+  927  2018-09-15.07:05:12 cd /u01/patches/11204/BP_180717/27980213/27441052/custom/server/27441052/custom/scripts
+
+  928  2018-09-15.06:24:32 tail -f IU_15092018.log 
+
+  929  2018-09-15.07:20:27 dcli -l root -g cell_group imageinfo
+
+  930  2018-09-15.07:20:44 dcli -l root -g cell_group imageinfo |grep "Active image status"
+
+  931  2018-09-15.07:20:56 dcli -l root -g cell_group imageinfo |grep "Active image version"
+
+  932  2018-09-15.07:31:52 pwd
+
+  933  2018-09-15.07:31:53 cd
+
+  934  2018-09-15.07:31:56 df -h
+
+  935  2018-09-15.07:32:16 mv /etc/fstab /etc/fstab_backup
+
+  936  2018-09-15.07:32:22 cat /etc/fstab_backup 
+
+  937  2018-09-15.07:32:32 vi /etc/fstab
+
+  938  2018-09-15.07:32:39 df -h
+  939  2018-09-15.07:32:58 cat /etc/fstab
+  940  2018-09-15.07:33:03 vi /etc/fstab
+  941  2018-09-15.07:33:12 reboot
+  942  2018-09-15.06:16:39 su - oracle
+  943  2018-09-15.06:18:00 su - oracle
+  944  2018-09-15.07:15:36 su - oracle
+  945  2018-09-15.08:06:10 df -h
+  946  2018-09-15.08:06:21 vi /etc/fstab
+  947  2018-09-15.08:06:35 cp /etc/fstab /etc/fstab_backup
+  948  2018-09-15.08:06:39 vi /etc/fstab
+  949  2018-09-15.08:06:47 cat /etc/fstab_backup
+  950  2018-09-15.08:06:50 vi /etc/fstab
+  951  2018-09-15.08:07:08 cat /etc/fstab
+  952  2018-09-15.08:07:11 reboot
+  953  2018-09-15.08:16:54 df -h
+  954  2018-09-15.08:17:25 /u01/patches/18.1.6.0.0/Db_node/README.html 
+  955  2018-09-15.08:17:32 cd /u01/patches/18.1.6.0.0/Db_node/
+  956  2018-09-15.08:17:33 ls
+  957  2018-09-15.08:17:38 cd
+  958  2018-09-15.08:17:48 cd /u01/patches/Db_node/dbserver_patch_5.180720/
+
+  959  2018-09-15.08:18:07 ./dbnodeupdate.sh -u -v -l /u01/patches/Db_node/p21634633_181700_Linux-x86-64.zip 
+  960  2018-09-15.08:19:56 ./dbnodeupdate.sh -u -v -l /u01/patches/18.1.6.0.0/Db_node/p28514392_181000_Linux-x86-64.zip 
+  961  2018-09-15.08:21:20 ./dbnodeupdate.sh -u -l /u01/patches/18.1.6.0.0/Db_node/p28514392_181000_Linux-x86-64.zip 
+  962  2018-09-15.09:11:05 imageinfo
+  963  2018-09-15.09:11:17 /u01/patches/Db_node/dbserver_patch_5.180720/
+  964  2018-09-15.09:11:22 cd /u01/patches/Db_node/dbserver_patch_5.180720/
+  965  2018-09-15.09:11:42 cd /etc/
+  966  2018-09-15.09:11:45 cat fstab
+  967  2018-09-15.09:11:58 cat fstab_backup
+  968  2018-09-15.09:12:06 mv fstab_backup fstab
+  969  2018-09-15.09:12:12 mount -a
+  970  2018-09-15.09:12:14 df -h
+  971  2018-09-15.09:11:29 ./dbnodeupdate.sh -c
+  972  2018-09-15.09:48:58 /u01/app/12.2.0.1/grid/crs/install/rootcrs.sh -prepatch
+  973  2018-09-15.09:52:47 su - oracle
+  974  2018-09-15.10:01:55 /u01/app/12.2.0.1/grid/rdbms/install/rootadd_rdbms.sh
+  975  2018-09-15.09:33:29 su - oracle
+  976  2018-09-15.10:02:23 cd
+  977  2018-09-15.10:02:56 dcli -l oracle -g dbs_group "/u01/app/oracle/product/11.2.0.4/dbhome_1/OPatch/opatch lspatches"
+  978  2018-09-15.10:03:06 dcli -l root -g dbs_group "/u01/app/oracle/product/11.2.0.4/dbhome_1/OPatch/opatch lspatches"
+  979  2018-09-15.10:02:00 /u01/app/12.2.0.1/grid/crs/install/rootcrs.sh -postpatch
+  980  2018-09-15.10:06:20 /u01/app/12.2.0.1/grid/bin/crsctl query -h
+  981  2018-09-15.10:06:36 /u01/app/12.2.0.1/grid/bin/crsctl query crs activeversion
+  982  2018-09-15.10:06:59 /u01/app/12.2.0.1/grid/bin/crsctl query crs softwarepatch
+  983  2018-09-15.10:07:43 /u01/app/12.2.0.1/grid/bin/crsctl query -h |grep state
+  984  2018-09-15.10:10:47 /u01/app/12.2.0.1/grid/bin/crsctl query -h
+  985  2018-09-15.10:11:03 /u01/app/12.2.0.1/grid/bin/crsctl query crs activeversion -f
+  986  2018-09-15.10:03:50 su - oracle
+  987  2018-09-15.10:17:58 cd /u01/app/12.2.0.1/grid/install/
+  988  2018-09-15.10:18:00 ls -ltr
+  989  2018-09-15.10:18:13 ls -ltr |grep kfod
+  990  2018-09-15.10:18:50 cd ..
+  991  2018-09-15.10:18:52 cd bin/
+  992  2018-09-15.10:19:07 kfod OP=PATCHES
+  993  2018-09-15.10:19:11 ./kfod OP=PATCHES
+  994  2018-09-15.10:19:26 ./kfod OP=PATCHLVL
+  995  2018-09-15.10:11:40 su - oracle
+  996  2018-09-15.10:22:50 cd
+  997  2018-09-15.10:23:05  /u01/app/12.2.0.1/grid/crs/install/rootcrs.sh -prepatch
+  998  2018-09-15.10:24:11 su - oracle
+  999  2018-09-15.10:25:17 /u01/app/12.2.0.1/grid/rdbms/install/rootadd_rdbms.sh
+1000  2018-09-15.10:25:23 /u01/app/12.2.0.1/grid/crs/install/rootcrs.sh -postpatch
+1001  2018-09-15.14:31:18 history
+[root@alzx7dbadm01 ~]#
+
+
+
