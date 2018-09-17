@@ -1,0 +1,161 @@
+
+---https://github.com/Jiewu3/exadata/blob/master/exadata%20patching
+
+run script in test to set compat to 11.2.0.4
+
+/sbin/init 0
+
+download newest patch 16486998, it's like opatch and gets unzipped into cd /u01/patches/24436624/Infrastructure/ExadataDBNodeUpdate/5.150922/16486998
+23315889
+
+##################### skip switches ############################
+
+crsctl stop cluster -all
+dcli -g /home/oracle/dbs_group -l root "/u01/app/12.1.0.2/grid/bin/crsctl stop crs -f"
+dcli -g /home/oracle/cell_group -l root "cellcli -e alter cell shutdown services all"
+cd /u01/patches/24436624/Infrastructure/12.1.2.3.3/ExadataStorageServer_InfiniBandSwitch/patch_12.1.2.3.3.161208
+./patchmgr -cells /home/oracle/cell_group -reset_force
+./patchmgr -cells /home/oracle/cell_group -cleanup
+./patchmgr -cells /home/oracle/cell_group -patch_check_prereq
+dcli -g /home/oracle/cell_group -l root "cellcli -e drop alerthistory ALL"
+./patchmgr -cells /home/oracle/cell_group -patch_check_prereq
+screen -S exapatch
+./patchmgr -cells /home/oracle/cell_group -patch
+imageinfo
+./patchmgr -cells /home/oracle/cell_group -cleanup
+
+yum remove perl-Parse-RecDescent-1.80-259.2.x86_64
+yum remove yast2-core-2.13.39-0.3.x86_64
+yum remove perl-gettext-1.05-13.2.x86_64
+yum remove perl-X500-DN-0.28-133.2.x86_64
+
+./patchmgr -ibswitches -upgrade -ibswitch_precheck
+./patchmgr -ibswitches /home/oracle/ibs_group -upgrade -ibswitch_precheck
+./patchmgr -ibswitches /home/oracle/ibs_group -upgrade
+
+
+cd /u01/patches/24436624/Infrastructure/ExadataDBNodeUpdate
+lsof /u04/orabkup
+./dbnodeupdate.sh -u -l /u01/patches/24436624/Infrastructure/12.1.2.3.3/ExadataDatabaseServer_OL6/p24669306_121233_Linux-x86-64.zip -v -N
+./dbnodeupdate.sh -u -l /u01/patches/24436624/Infrastructure/12.1.2.3.3/ExadataDatabaseServer_OL6/p24669306_121233_Linux-x86-64.zip -s
+-- ./dbnodeupdate.sh -u -l /u01/patches/24436624/Infrastructure/12.1.2.3.3/ExadataDatabaseServer_OL6/p24669306_121233_Linux-x86-64.zip -s -n
+-- umount ...
+-- ./dbnodeupdate.sh -u -l /u01/patches/p24669306_121233_Linux-x86-64.zip -s
+./dbnodeupdate.sh -c
+
+./patchmgr -dbnodes /home/oracle/dbs_group1 -precheck -iso_repo /u01/patches/25440397/Infrastructure/12.1.2.3.5/ExadataDatabaseServer_OL6/p25640844_121230_Linux-x86-64.zip -target_version 12.1.2.3.5.170418
+./patchmgr -dbnodes /home/oracle/dbs_group1 -upgrade -iso_repo /u01/patches/25440397/Infrastructure/12.1.2.3.5/ExadataDatabaseServer_OL6/p25640844_121230_Linux-x86-64.zip -target_version 12.1.2.3.5.170418
+./patchmgr -dbnodes /home/oracle/dbs_group1 -cleanup
+
+https://docs.oracle.com/cd/E80920_01/DBMMN/maintaining-exadata-database-servers.htm#DBMMN22300
+
+sudo crsctl stop crs
+setdb dummy
+cd /u01/patches/24436624/Database/11.2.0.4.0/11.2.0.4.161018OJVMPSU/24315821
+$ORACLE_HOME/OPatch/opatch prereq CheckConflictAgainstOHWithDetail -ph ./
+$ORACLE_HOME/OPatch/opatch apply
+
+setdb dummy3
+/u01/patches/24436624/Database/12.1.0.2.0
+cd /u01/patches/24436624/Database/12.1.0.2.0/12.1.0.2.161018OJVMPSU/24315824
+$ORACLE_HOME/OPatch/opatch prereq CheckConflictAgainstOHWithDetail -ph ./
+$ORACLE_HOME/OPatch/opatch apply
+
+setdb +ASM
+sudo crsctl start crs
+
+setdb dummy
+cd /u01/patches/24436624/Database/11.2.0.4.0/11.2.0.4.161018_QDPE_Oct2016/24479801
+export PATH=$PATH:$ORACLE_HOME/OPatch
+sudo $ORACLE_HOME/OPatch/opatch auto -oh $ORACLE_HOME
+	/u01/app/oracle/product/11.2.0.4/dbhome_1/ocm.rsp
+
+-- as root
+export ORACLE_HOME=/u01/app/12.1.0.2/grid
+cd $ORACLE_HOME
+./OPatch/opatchauto apply /u01/patches/24436624/Database/12.1.0.2.0/12.1.0.2.161018DBBP/24448103
+/u01/app/oracle/product/12.1.0.2/dbhome_3/OPatch/opatchauto apply /u01/patches/24436624/Database/12.1.0.2.0/12.1.0.2.161018DBBP/24448103 -oh /u01/app/oracle/product/12.1.0.2/dbhome_3
+
+export ORACLE_HOME=/u01/app/oracle/product/12.1.0.2/dbhome_3
+
+
+/var/log/exadatatmp/080116212758/yumupdate.out
+/var/log/cellos/dbnodeupdate.log
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~```
+
+as root from db node 1:
+ibclearcounters
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`
+
+$ cd /home/oracle/exachk
+create a screen session
+$ screen -S exachk
+$ ./exachk
+enter number listed for all databases when prompted
+
+once completed change owner of zipfile & directory to oracle:dba
+chown oracle:dba <zip file>
+chown -R oracle:dba <directory>
+
+
+infiniband/cell server prereq check
+login as root
+$ cd /u01/patches/24436624/Infrastructure/12.1.2.3.3/ExadataStorageServer_InfiniBandSwitch/patch_12.1.2.3.3.161208
+$ ./patchmgr -cells /home/oracle/cell_group -patch_check_prereq
+$ ./patchmgr -ibswitches -upgrade -ibswitch_precheck
+
+ps -ef|grep exachk
+
+
+http://stlexadb01t:8080/apex/f?p=2310
+http://rcoc1exadb01t:8080/apex/f?p=2310
+user: CollectionManager
+tttest_cm4n4g3r
+
+About Collection Managger Application
+ORAchk Collection Manager Application for the ORAchk configuration audit tool gives you a complete system for managing
+and tracking ORAchk collection data uploaded to tables in a database.
+
+ORAchk is the new name for RACcheck which will take effect starting with version 2.2.4.ORAchk and RACcheck are functionally 
+equivalent.Please see the following MOS Note for more details:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~```
+
+-- shutdown cell
+cellcli -e 'alter cell shutdown services all'
+
+-- reboot
+/sbin/init 0
+
+-- check raid battery
+/opt/MegaRAID/MegaCli/MegaCli64 -AdpBbuCmd -a0
+
+john tsai phone number.  314-452-8687 
+
+--------------------------------------
+----- setup snmp on exadata
+--- db nodes
+-- check config
+dbmcli -e list dbserver detail
+snmpSubscriber:         host=10.4.8.164,port=162,community=public,type=asr
+-- test config
+dbmcli -e alter dbserver validate snmp type=asr
+-- add config
+dbmcli
+	alter dbserver snmpSubscriber=((host='10.4.8.164',port=162,community=public,type=asr))
+	
+--- storage cells
+-- check config
+cellcli -e list cell detail
+snmpSubscriber:         host=10.4.8.164,port=162,community=public,type=asr
+-- test config
+cellcli -e alter cell validate snmp type=asr
+-- add config
+cellcli
+	alter cell snmpsubscriber=((host='10.4.8.164',port=162,community=public,type=asr))
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ibhosts
+ibswitches
