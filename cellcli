@@ -1,0 +1,60 @@
+
+--http://www.exadata-certification.com/2017/03/top-14-commands-for-exadata-health-check.html
+
+Exadata alert
+
+dcli -l root -g ~/cell_group "cellcli -e list metriccurrent where alertState!=\'Normal\'"
+
+Exadata cell CPU utilization
+
+dcli -l root -g ~/cell_group "cellcli -e list metriccurrent CL_CPUT"
+
+Exadata cells flashdisk with status NOT present
+
+dcli -l root -g ~/cell_group "cellcli -e list physicaldisk attributes name, id, slotnumber where disktype=\"flashdisk\" and status=\'not present\'"
+
+Exadata cell current temperature
+
+dcli -l root -g ~/cell_group 'cellcli -e list cell detail' | egrep temperature 
+
+Exadata alert history
+
+dcli -l root -g ~/cell_group "cellcli -e list metrichistory where alertState!=\'Normal\'" 
+
+Exadata cells battery replacement checks
+
+dcli -l root -g ~/cell_group '/opt/MegaRAID/MegaCli/MegaCli64 -adpbbucmd -aALL' |grep replaced
+
+Exadata cells harddisk with status NOT present
+
+dcli -l root -g ~/cell_group "cellcli -e list physicaldisk attributes name, id, slotnumber where disktype=\"harddisk\" and status=\'not present\'" 
+
+Exadata cells services checks
+
+dcli -l root -g ~/cell_group 'cellcli -e list cell detail' | egrep '(cellsrvStatus)|(msStatus)|(rsStatus)'
+
+Exadata cells memory checks
+
+dcli -l root -g ~/cell_group --vmstat="-a 3 2"
+
+Exadata physical memory checks
+
+dcli -g ~/all_group -l root "cat /proc/meminfo | egrep '^MemTotal:|^MemFree:|^Cached:
+
+Exadata physical disk checks
+
+dcli -g ~/all_group -l root /opt/MegaRAID/MegaCli/MegaCli64 AdpAllInfo -aALL | grep "Device Present" -A 8
+
+Exadata cell fan status
+
+dcli -l root -g ~/cell_group 'cellcli -e list cell detail' | egrep fan 
+
+Exadata storage cell model detail
+
+dcli -l root -g ~/cell_group 'cellcli -e list cell detail' | egrep makeModel -- For cell
+
+dcli -l root -g ~/dbs_group 'dmidecode -s system-product-name'  -- For DB node
+
+Exadata cells power status
+
+dcli -l root -g ~/cell_group 'cellcli -e list cell detail' | egrep power
