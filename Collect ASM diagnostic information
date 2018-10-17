@@ -1,0 +1,415 @@
+--http://www.askmaclean.com/archives/script%E6%94%B6%E9%9B%86asm%E8%AF%8A%E6%96%AD%E4%BF%A1%E6%81%AF.html
+
+Script: Collect ASM diagnostic information
+2011/05/30 BY MACLEAN LIU 4 COMMENTS
+
+The best tool for collecting ASM diagnostic information is still RDA. For environments where RDA is not available, the following script can be used:
+
+spool asm_diag1.txt
+set pagesize 1000
+set lines 500
+col "Group Name"   form a25
+col "Disk Name"    form a30
+col "State"  form a15
+col "Type"   form a7
+col "Free GB"   form 9,999
+alter session set nls_date_format='DD-MON-YYYY HH24:MI:SS';
+select sysdate "Date and Time" from dual;
+
+select * from v$asm_diskgroup order by 1;
+select * from v$asm_disk order by 1, 2, 3;
+select * from gv$asm_operation order by 1;
+select * from v$version where banner like '%Database%' order by 1;
+select * from gv$asm_client order by 1;
+
+prompt
+
+prompt ASM Disk Groups
+prompt ===============
+
+select group_number  "Group"
+,      name          "Group Name"
+,      state         "State"
+,      type          "Type"
+,      total_mb/1024 "Total GB"
+,      free_mb/1024  "Free GB"
+from   v$asm_diskgroup
+/
+
+prompt
+prompt ASM Disks
+prompt ==============
+
+col "Group"          form 999
+col "Disk"           form 999
+col "Header"         form a9
+col "Mode"           form a8
+col "Redundancy"     form a10
+col "Failure Group"  form a10
+col "Path"           form a19
+
+ select group_number  "Group"
+,      disk_number   "Disk"
+,      header_status "Header"
+,      mode_status   "Mode"
+,      state         "State"
+,      redundancy    "Redundancy"
+,      total_mb      "Total MB"
+,      free_mb       "Free MB"
+,      name          "Disk Name"
+,      failgroup     "Failure Group"
+,      path          "Path"
+from   v$asm_disk
+order by group_number
+,        disk_number
+
+/
+
+prompt
+prompt Instances currently accessing these diskgroups
+prompt ==============================================
+
+select c.group_number  "Group"
+,      g.name          "Group Name"
+,      c.instance_name "Instance"
+from   v$asm_client c
+, in $ asm_diskgroup g
+where  g.group_number=c.group_number
+/
+
+prompt
+prompt Report the Percentage of Imbalance in all Mounted Diskgroups
+prompt ==============================================
+select dfail, count(dfail) from
+(
+select disk, count(failgroup) as dfail
+from x$kfdpartner, v$asm_disk where
+number_kfdpartner=disk_number and grp=group_number
+group by disk, failgroup
+)
+group by dfail; 
+
+select g.name as "GROUP", d.name as "DISK", d.failgroup, fcnt, pcnt,
+decode(pcnt - fcnt, 0, 'MUST', 'SHOULD') as action from
+(select gnum, DISK1, failgroup, count(failgroup) as fcnt from
+(Select rapidly disk1
+from
+(
+select d.group_number as gnum, disk as disk1,
+count(distinct failgroup) as dfail
+from x$kfdpartner, v$asm_disk_stat d where
+number_kfdpartner=disk_number and grp=d.group_number
+and active_kfdpartner=1
+group by d.group_number, disk
+), in $ asm_disk_stat
+where dfail < 3
+and disk1=disk_number
+and gnum=group_number),
+x$kfdpartner, v$asm_disk_stat d where
+number_kfdpartner=disk_number and grp=d.group_number and grp=gnum
+and disk1=disk
+and active_kfdpartner=1
+group by gnum, disk1, failgroup),
+(select grp, disk, count(disk) as pcnt from x$kfdpartner where
+active_kfdpartner=1 group by grp, disk),
+in $ asm_diskgroup_stat g, in $ asm_disk_stat d
+where gnum=grp and gnum=g.group_number and gnum=d.group_number and
+disk=disk1 and disk=disk_number and
+((fcnt = 1 and (pcnt - fcnt) > 3) or ((pcnt - fcnt) = 0))
+/
+
+col TYPE form a15
+col FILE_NUMBER form 9999 head FILE_NUM
+col GROUP_NUMBER form 9999 head GR_NUM
+col GB for 9999.99
+
+select GROUP_NUMBER   ,
+ FILE_NUMBER          ,
+ COMPOUND_INDEX       ,
+ INCARNATION          ,
+ BLOCK_SIZE           ,
+ BLOCKS               ,
+ BYTES/1024/1024/1024 GB ,
+ TYPE                 ,
+ STRIPED              ,
+ CREATION_DATE        ,
+ MODIFICATION_DATE
+from v$asm_file
+where TYPE != 'ARCHIVELOG'
+/
+
+prompt
+prompt free ASM disks and their paths
+prompt ===========================
+select header_status , mode_status, path from V$asm_disk
+where header_status in ('FORMER','CANDIDATE')
+/
+
+show parameter asm
+show parameter size
+show parameter proc
+show parameter cluster
+show parameter instance_type
+show parameter instance_name
+
+show parameter pfile
+
+show sga
+
+spool off
+ 
+
+Code to be run on the ASM instance. Use file asmdebug.sql
+
+ 
+
+set newpage none
+set linesize 100
+spool /tmp/asmdebug.out
+-
+-- Get a timestamp
+select rpad('>', 10, '>'), to_char(sysdate, 'MON DD HH24:MM:SS') from dual;
+-
+-- Diskgroup information
+set head off
+select 'Diskgroup Information' from dual;
+set head on
+column name format a15
+column DG# format 99
+select group_number DG#, name, state, type, total_mb, free_mb from
+v $ asm_diskgroup;
+-
+-- Get the # of Allocation Units  per DG
+set head off
+select 'Number of AUs per diskgroup' from dual;
+set head on
+select count(number_kfdat) AU_count, group_kfdat DG# from x$kfdat
+group by group_kfdat;
+-
+-- Get the # of Allocation Units  per DiskGroup and Disk
+set head off
+select 'Number of AUs per Diskgroup,Disk' from dual;
+col "group#,disk#" for a30
+set head on
+select count(*)AU_count, GROUP_KFDAT||','||number_kfdat "group#,disk#" from x$kfdat group by GROUP_KFDAT,number_kfdat;
+-
+-- Get the # of allocated (V) and free (F) Allocation Units
+set head off
+select 'Number of allocated (V) and free (F) Allocation Units' from dual;
+col "VF" for a2
+set head on
+select GROUP_KFDAT "group#", number_kfdat "disk#", v_kfdat "VF", count(*)
+from x$kfdat
+group by GROUP_KFDAT, number_kfdat, v_kfdat;
+-
+-- Get the # of Allocation Units per ASM file
+set head off
+select 'Number of AUs per ASM file ordered by AU count for metadata only'
+from dual;
+set head on
+select count(XNUM_KFFXP) AU_count,  NUMBER_KFFXP file#, GROUP_KFFXP DG# from x$kffxp where NUMBER_KFFXP < 256
+group by NUMBER_KFFXP, GROUP_KFFXP
+order by count(XNUM_KFFXP) ;
+-
+-- Get the # of Allocation Units per ASM file by file alias.  Change the
+-- system_created Y|N depending if you want the short or long ASM name
+set head off
+select 'Number of AUs per ASM file ordered by AU count.  This is for non
+metadata' from dual;
+col name format a60
+set head on
+select GROUP_KFFXP, NUMBER_KFFXP, name, count(*)
+from x$kffxp, v$asm_alias
+where GROUP_KFFXP=GROUP_NUMBER and NUMBER_KFFXP=FILE_NUMBER and
+system_created='Y'
+     group by GROUP_KFFXP, NUMBER_KFFXP, name
+     order by GROUP_KFFXP, NUMBER_KFFXP;
+-
+-- Get partner information.  This is really only useful if redundancy is other than
+-- external.
+set head off
+select 'The following shows the disk to partner relationship.  This is really only
+useful if using normal or high redundancy.' from dual;
+set head on
+select grp DG#, disk, NUMBER_KFDPARTNER partner, PARITY_KFDPARTNER parity, ACTIVE_KFDPARTNER active
+from x$kfdpartner;
+-
+-- Another look at file utilization.
+set head off
+set linesize 132
+select 'bytes is the sum of AUs with data in them * 1024^2
+space is the sum of all AUs allocated for this file * 1024^2'
+from dual;
+set head on
+col Name format a60
+select f.group_number, f.file_number, bytes, space, space/(1024*1024) "InMB", a.name "Name"
+from v$asm_file f, v$asm_alias a
+where f.group_number=a.group_number and f.file_number=a.file_number
+    and system_created='Y'
+    order by f.group_number, f.file_number;
+-
+-- Get robust disk information
+set linesize 400
+col failgroup format a20
+col label format a20
+col name format a40
+col path format a40
+set head off
+select 'Robust disk information' from dual;
+set head on
+select GROUP_NUMBER, DISK_NUMBER, INCARNATION, MOUNT_STATUS, HEADER_STATUS, MODE_STATUS, STATE, LIBRARY, TOTAL_MB, FREE_MB,
+NAME, FAILGROUP, LABEL, PATH, CREATE_DATE, MOUNT_DATE, READS,
+WRITES, READ_ERRS, WRITE_ERRS, READ_TIME, WRITE_TIME, BYTES_READ, BYTES_WRITTEN
+from v$asm_disk;
+-
+spool off
+ 
+
+ 
+
+Code to be executed on the database instances using this ASM instance. Use file rdbmsdebug.sql
+
+ 
+
+set newpage none
+spool /tmp/rdbmsdebug.out
+-
+-- Get a timestamp
+select rpad('>', 10, '>'), to_char(sysdate, 'MON DD HH24:MM:SS') from dual;
+-
+-- Get datafile information as the database sees it
+set head off
+select 'V$DATAFILE information' from dual;
+set head on
+set linesize 132
+col name format a60
+select file#, name, block_size, blocks, bytes, bytes/(1024*1024) "InMB",
+status from v$datafile;
+-
+-- Get controlfile information as the database sees it
+set head off
+select 'V$CONTROLFILE information' from dual;
+set head on
+select * from v$controlfile;
+-
+-- Get archivelog information as the database sees it
+set head off
+select 'GV$ARCHIVED_LOG information' from dual;
+set head on
+select name, thread#, sequence#, blocks*block_size "size", status
+status from gv$archived_log
+order by thread#,sequence#;
+-
+-- Get redolog information as the database sees it
+set head off
+select 'v$log and v$logfile information' from dual;
+set head on
+col member format a60
+select a.group#, member, thread#, sequence#, bytes, a.status
+from v$log a, v$logfile b where a.group# = b.group#
+order by thread#;
+-
+-- Get tempfiles information as the database sees it
+set head off
+select 'GV$TEMPFILE information' from dual;
+set head on
+col name format a60
+select INST_ID,TS#,FILE#, RFILE#,NAME, CREATION_CHANGE# , CREATION_TIME,  STATUS, BYTES, BLOCKS, CREATE_BYTES, BLOCK_SIZE
+from gv$tempfile order by inst_id, file#;
+spool off
+ 
+
+Other items to collect:
+
+System error logs
+Alert logs from all database and ASM instances
+All recent trace files from all databases involved and all of the ASM instances
+All “.trc” files from the ASM instances
+
+ 
+
+check ASM disk space
+
+ 
+
+1) Determine which (if any) disks contain no free space (ie are below the threshold)
+select group_kfdat "group #",
+       number_kfdat "disk #",
+       count(*) "# AU's"
+from x$kfdat a
+where v_kfdat = 'v'
+and not exists (select *
+                from x$kfdat b
+                where a.group_kfdat = b.group_kfdat
+                and a.number_kfdat = b.number_kfdat
+                and b.v_kfdat = 'F')
+group by GROUP_KFDAT, number_kfdat;
+
+If no rows are returned ... the following query can also be used
+
+select disk_number "Disk #", free_mb
+from v$asm_disk
+where group_number = *** disk group number ***
+order by 2;
+
+If rows are returned from the first query ... or FREE_MB is less than 100mb in the second ... then there is probably insufficient disk space to allow a rebalance to occur ... Note the Disk #'s for later
+
+2) Determine which files have allocation units on the disk(s) that are on exhausted disks
+
+select name, file_number
+from v$asm_alias
+where group_number in (select group_kffxp
+                                           from x$kffxp
+                                           where group_kffxp=*** disk group number ***
+                                           and disk_kffxp in (*** disk list from #1 above ***)
+                                           and au_kffxp != 4294967294
+                                           and number_kffxp >= 256)
+and file_number in (select number_kffxp
+                                  from x$kffxp
+                                  where group_kffxp=*** disk group number ***
+                                  and disk_kffxp in (*** disk list from #1 above ***)
+                                  and au_kffxp != 4294967294
+                                  and number_kffxp >= 256)
+and system_created='Y';
+
+3) Free up space so that the rebalance can occur
+
+Using the file list from #2 above ... we will need to either drop or move tablespace(s)/datafile(s) such that all disks that are exhausted have at least 100mb free ...
+
+NOTE ... the AU count above ... should relate to 1mb AU size ... so if a single file ... with at least 100 au's can be dropped or moved ... this
+should be sufficient to free up enough space to allow the rebalance to occur
+
+Droppable tablespaces may be things like:
+    * temporary tablespaces
+    * index tablespaces (assuming you know how to rebuild the indexes)
+
+If none of the tablespaces are droppable then the tablespace(s)/datafile(s) will need to be
+    * moved to another diskgroup (at least temporarily) ...
+    * dropped using RMAN (with the database shutdown) and will be restored later
+
+   Note 330103.1  How to Move Asm Database Files From one Diskgroup To Another ?
+
+4) Check to see if there is sufficient FREE_MB on the problem disks
+
+select disk_number "Disk #", free_mb
+from v$asm_disk
+where disk_group = *** disk group number ***
+and disk_number in (*** disk list from #1 above ***)
+order by 2;
+ 
+
+Check Diskgroup Balance
+If you want to perform an imbalance check for all mounted diskgroups, run the script in MOS Note 367445.1.
+
+If you want to determine if you already have imbalance for a file in an existing diskgroup, use the following query:
+
+select disk_kffxp, sum(size_kffxp) from x$kffxp where group_kffxp=AAA and number_kffxp=BBB and lxn_kffxp=0 group by disk_kffxp order by 2;
+Breakdown of input/output is as follows:
+
+AAA is the group_number in v$asm_alias
+BBB is file_number in v$asm_alias
+disk_kffxp gives us the disk number.
+size_kffxp is used such that we account for variable sized extents.
+sum(size_kffxp) provides the number of AUs that are on that disk.
+lxn_kffxp is used in the query such that we go after only the primary extents, not secondary extents
+If you want to check balance from an IO perspective, query the statistics in v$asm_disk_iostat before and after running a large SQL statement. For example, if the running a large query that does just reads, the reads and read_bytes columns should be roughly the same for all disks in the diskgroup.
