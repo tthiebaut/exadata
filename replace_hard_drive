@@ -1,0 +1,154 @@
+
+--https://ronniethedba.wordpress.com/2016/01/25/how-to-replace-a-hard-drive-in-an-exadata-storage-server/
+How to : Replace a Hard Drive in an Exadata Storage Server
+Posted on January 25, 2016 by baironnie
+In my last company, we support a lot of Exadata. unlike with other company the DBA’s job is only limited to DB Node. but with my previous company we DBA’s support everything.. as in everything, since we have access to root of both DB and Storage Cell.
+
+1. Check the Disk having issue.
+
+ 
+CellCLI> LIST PHYSICALDISK WHERE diskType=HardDisk AND status LIKE ".*failure.*" DETAIL
+         name:                   20:3
+         deviceId:               21
+         diskType:               HardDisk
+         enclosureDeviceId:      20
+         errMediaCount:          14
+         errOtherCount:          0
+         luns:                   0_3
+         makeModel:              "SEAGATE ST32000SSSUN2.0T"
+         physicalFirmware:       061A
+         physicalInsertTime:     2014-06-30T14:15:33+00:00
+         physicalInterface:      sas
+         physicalSerial:         L2KDFT
+         physicalSize:           1863.0166854858398G
+         slotNumber:             3
+         status:                 warning - predictive failure
+
+CellCLI>
+
+
+2. Check the diskgroups..
+
+ 
+SQL> 1
+  1* select group_number,name,state from v$asm_diskgroup
+SQL> /
+
+GROUP_NUMBER NAME                                               STATE
+------------ -------------------------------------------------- ---------------------------------
+           1 DATA_EXA2                                          MOUNTED
+           2 ARCH_EXA2                                          MOUNTED
+           3 RECO_EXA2                                          MOUNTED
+           4 DATA2_EXA2                                         MOUNTED
+           5 RECO2_EXA2                                         MOUNTED
+           6 DATA1_CORP                                         MOUNTED
+           7 DATA2_CORP                                         MOUNTED
+           8 DATA3_CORP                                         MOUNTED
+           9 DATA4_CORP                                         MOUNTED
+          10 DATA5_CORP                                         MOUNTED
+          11 DATA6_CORP                                         MOUNTED
+          12 DATA7_CORP                                         MOUNTED
+          13 DATA8_CORP                                         MOUNTED
+          14 DATA9_CORP                                         MOUNTED
+          15 DATA10_CORP                                        MOUNTED
+          16 DATA11_CORP                                        MOUNTED
+          17 DATA12_CORP                                        MOUNTED
+
+17 rows selected.
+
+SQL>
+3.Check if any rebalance operation running.
+
+ 
+SQL> select * from gv$asm_operation where state='RUN';
+
+no rows selected
+
+SQL>
+4. check the status of disk to be replaced.
+
+ 
+CellCLI> list celldisk where lun=0_3
+         CD_03_exa2cel06         proactive failure
+
+CellCLI> list griddisk where celldisk=CD_03_exa2cel06 attributes name,size,status,asmmodestatus
+         ARCH_EXA2_CD_03_exa2cel06       29.109375G      proactive failure       DROPPED
+         DATA4_CORP_CD_03_exa2cel06      300G            proactive failure       DROPPED
+         DATA_EXA2_CD_03_exa2cel06       1532.546875G    proactive failure       DROPPED
+
+CellCLI>
+Optional but i always do it.
+
+ 
+CellCLI> alter physicaldisk 20:3 drop for replacement
+Physical disk 20:3 was dropped for replacement.
+
+CellCLI>
+ 
+CellCLI> list physicaldisk 20:3 detail
+         name:                   20:3
+         deviceId:               21
+         diskType:               HardDisk
+         enclosureDeviceId:      20
+         errMediaCount:          14
+         errOtherCount:          0
+         makeModel:              "SEAGATE ST32000SSSUN2.0T"
+         physicalFirmware:       061A
+         physicalInsertTime:     2014-06-30T14:15:33+00:00
+         physicalInterface:      sas
+         physicalSerial:         L2KDFT
+         physicalSize:           1863.0166854858398G
+         slotNumber:             3
+         status:                 warning - predictive failure - dropped for replacement
+
+CellCLI>
+5.Now inform Oracle support to replace the Disk. Once done do the validation.
+
+ 
+CellCLI> list physicaldisk 20:3 detail
+         name:                   20:3
+         deviceId:               22
+         diskType:               HardDisk
+         enclosureDeviceId:      20
+         errMediaCount:          0
+         errOtherCount:          0
+         luns:                   0_3
+         makeModel:              "SEAGATE ST32000SSSUN2.0T"
+         physicalFirmware:       061A
+         physicalInsertTime:     2014-10-24T14:33:23+00:00
+         physicalInterface:      sas
+         physicalSerial:         L89VNM
+         physicalSize:           1863.0166854858398G
+         slotNumber:             3
+         status:                 normal
+
+CellCLI>
+ 
+CellCLI> list celldisk where lun=0_3 detail
+         name:                   CD_03_exa2cel06
+         comment:
+         creationTime:           2014-10-24T14:33:23+00:00
+         deviceName:             /dev/sdd
+         devicePartition:        /dev/sdd
+         diskType:               HardDisk
+         errorCount:             0
+         freeSpace:              0
+        id:                     4948604a-ee85-47c3-b644-740531516331
+         interleaving:           none
+         lun:                    0_3
+         physicalDisk:           L89VNM
+         raidLevel:              0
+         size:                   1861.703125G
+         status:                 normal
+
+CellCLI>
+ 
+CellCLI> list griddisk where celldisk=CD_03_exa2cel06 attributes name,size,status,asmmodestatus
+         ARCH_EXA2_CD_03_exa2cel06       29.109375G      active  ONLINE
+         DATA4_CORP_CD_03_exa2cel06      300G            active  ONLINE
+         DATA_EXA2_CD_03_exa2cel06       1532.546875G    active  ONLINE
+
+CellCLI>
+Thanks for visiting..
+
+Share this:
