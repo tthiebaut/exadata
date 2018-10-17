@@ -1,5 +1,6 @@
 
 --https://ronniethedba.wordpress.com/2016/01/25/how-to-replace-a-hard-drive-in-an-exadata-storage-server/
+--https://www.veritabani.gen.tr/2017/09/11/exadata-storage-server-uzerindeki-arizali-hard-diskin-degistirilmesi/
 How to : Replace a Hard Drive in an Exadata Storage Server
 Posted on January 25, 2016 by baironnie
 In my last company, we support a lot of Exadata. unlike with other company the DBA’s job is only limited to DB Node. but with my previous company we DBA’s support everything.. as in everything, since we have access to root of both DB and Storage Cell.
