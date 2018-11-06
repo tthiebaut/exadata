@@ -1,5 +1,6 @@
 
----https://github.com/Jiewu3/exadata/blob/master/exadata%20patching
+--https://github.com/Jiewu3/exadata/blob/master/exadata%20patching
+--http://pythianblog.wpengine.com/patch-exadata-part-1-introduction-prerequisites/
 
 run script in test to set compat to 11.2.0.4
 
