@@ -1,10 +1,19 @@
 
+--https://unknowndba.blogspot.com/2018/11/exadata-increase-or-decrease-number-of.html
+
+[root@alzx6dbadm01 ~]# dcli -g ~/dbs_group -l root "dbmcli -e list dbserver attributes corecount, cpucount, pendingCoreCount" | awk 'BEGIN{printf("%10s%10s%10s%10s\n\n", "Node", "Cpu", "Cores", "Pending")} {printf("%10s|%10s|%10s|%10s\n", $1, $2, $3, $4)}'
+
 [root@alzx6dbadm01 ~]# dcli -l root -g dbs_group dbmcli -e "list dbserver attributes coreCount"
 alzx6dbadm04: 32/44
 alzx6dbadm03: 32/44
 alzx6dbadm02: 32/44
 alzx6dbadm01: 32/44
 
+-- To modify the pending core count on one server
+[root@exadatadb01]# dbmcli -e alter dbserver pendingCoreCount = 24 force
+
+-- To modify the pending core count on all the nodes in one command
+[root@exadatadb01]# dcli -g ~/dbs_group -l root "dbmcli -e alter dbserver pendingCoreCount = 24 force"
 
 DBMCLI> alter dbserver pendingCoreCount=24 force
 DBServer alzx6dbadm01 successfully altered. Please reboot the system to make the new pendingCoreCount effective.
