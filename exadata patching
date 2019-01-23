@@ -3,6 +3,7 @@
 --http://pythianblog.wpengine.com/patch-exadata-part-1-introduction-prerequisites/
 --https://ezdba.wordpress.com/2018/06/01/exadata-x7-2-patch-18-1-5-ovm/
 --http://www.fernandosimon.com/blog/reaching-exadata-18c/
+--https://web.itu.edu.tr/~yucesoyb/exadata-upgrade-procedure.txt
 
 run script in test to set compat to 11.2.0.4
 
