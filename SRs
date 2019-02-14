@@ -1,0 +1,53 @@
+--SR 3-18728410801 : Exadata dbadmin01 rebooted
+	
+===========Linux to EEST =========================== 
+Hello, 
+
+Thanks for the update. 
+From the data collected from the sosreport and OS messages from node "alzx6dbadm01" could not see any obvious issues logged 
+From the Exawatcher logs could very high load average on the node prior to the reboot 
+
+------------------------------- 
+top - 06:24:48 up 117 days, 20:11, 3 users, load average: 841.98, 688.27, 424.85 
+top - 06:24:53 up 117 days, 20:11, 3 users, load average: 845.27, 691.50, 427.31 
+top - 06:24:58 up 117 days, 20:11, 3 users, load average: 807.13, 686.14, 427.00 
+top - 06:25:03 up 117 days, 20:11, 3 users, load average: 773.09, 681.10, 426.75 
+top - 06:25:09 up 117 days, 20:11, 3 users, load average: 741.93, 676.16, 426.53 
+top - 06:25:14 up 117 days, 20:12, 3 users, load average: 713.75, 671.41, 426.33 
+top - 06:25:19 up 117 days, 20:12, 3 users, load average: 687.98, 666.77, 426.14 
+top - 06:25:24 up 117 days, 20:12, 3 users, load average: 664.20, 662.20, 425.96 
+top - 06:25:29 up 117 days, 20:12, 3 users, load average: 642.40, 657.71, 425.77 
+top - 06:25:35 up 117 days, 20:12, 3 users, load average: 623.15, 653.46, 425.64 
+top - 06:25:40 up 117 days, 20:12, 3 users, load average: 605.68, 649.34, 425.53 
+top - 06:25:45 up 117 days, 20:12, 3 users, load average: 589.69, 645.30, 425.43 
+top - 06:25:50 up 117 days, 20:12, 3 users, load average: 576.02, 641.54, 425.39 
+top - 06:25:56 up 117 days, 20:12, 3 users, load average: 563.77, 637.91, 425.38 
+----------------------------------- 
+
+From ps output could see the following processes in D state and stuck with "mlx4_table_put" call. 
+------------------------------------------------------------------------- 
+zzz <11/11/2018 06:25:24> subcount: 32 
+0 D oracle 1671 1 1 31 19 0 - 122572 4380307 mlx4_table_put Nov08 ? 00:49:43 ora_ppa7_REPOPROD1 
+0 D oracle 2741 1 0 20 19 0 - 128996 2012079 mlx4_table_put 06:06 ? 00:00:00 oracleATLASDB1 (LOCAL=NO) 
+0 D oracle 2743 1 0 39 19 0 - 102812 2015058 mlx4_table_put 06:06 ? 00:00:00 oracleATLASDB1 (LOCAL=NO) 
+0 D oracle 2825 1 0 37 19 0 - 82292 4994739 mlx4_table_put 06:06 ? 00:00:00 ora_j00j_IRISDB1 
+0 D oracle 2841 1 0 17 19 0 - 80508 4994739 mlx4_table_put 06:06 ? 00:00:00 ora_j001_IRISDB1 
+0 D oracle 2843 1 0 0 19 0 - 81352 4994740 mlx4_table_put 06:06 ? 00:00:00 ora_j005_IRISDB1 
+0 D oracle 2912 1 0 50 19 0 - 80120 4994739 mlx4_table_put 06:07 ? 00:00:00 ora_j00t_IRISDB1 
+0 D oracle 2914 1 0 9 19 0 - 80808 4994740 mlx4_table_put 06:07 ? 00:00:00 ora_j00b_IRISDB1 
+0 D oracle 2923 1 0 6 19 0 - 94928 2011548 mlx4_table_put 06:07 ? 00:00:00 oracleATLASDB1 (LOCAL=NO) 
+0 D oracle 2927 1 0 17 19 0 - 91376 2011534 mlx4_table_put 06:07 ? 00:00:00 oracleATLASDB1 (LOCAL=NO) 
+0 D oracle 2936 1 0 36 19 0 - 93824 2011548 mlx4_table_put 06:07 ? 00:00:00 oracleATLASDB1 (LOCAL=NO) 
+0 D oracle 4500 1 0 13 19 0 - 127008 2317614 mlx4_table_get 06:07 ? 00:00:01 ora_j000_KASCV1 
+0 D oracle 4517 1 0 38 19 0 - 126624 2316567 mlx4_table_get 06:07 ? 00:00:00 ora_j001_KASCV1 
+0 D oracle 4535 1 0 14 19 0 - 123996 2314018 mlx4_table_get 06:07 ? 00:00:00 ora_j002_KASCV1 
+0 D oracle 4537 1 0 36 19 0 - 123756 2314045 rds_ib_flush_mr_p 06:07 ? 00:00:00 ora_j003_KASCV1 
+==================================================================================================== 
+
+As per the below document seems to be known issue regarding ICM memory allocation issue. 
+would recommend to update the kernel version to 4.1.12-94.8.5 or higher 
+
+Oracle Linux: High Load observed with mutex_lock | mlx4_table_put [mlx4_core] ( Doc ID 2470156.1 ) 
+
+Regards, 
+Nagaraj
