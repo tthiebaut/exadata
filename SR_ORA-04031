@@ -1,0 +1,98 @@
+
+	
+Hello Baki - 
+
+1.) Please provide the following files: 
+
+/u01/app/oracle/diag/rdbms/dwhprod/DWHPROD1/trace/DWHPROD1_lmd0_107386.trc 
+/u01/app/oracle/diag/rdbms/dwhprod/DWHPROD1/incident/incdir_658641/DWHPROD1_lmd0_107386_i658641.trc 
+/u01/app/oracle/diag/rdbms/dwhprod/DWHPROD1/incident/incdir_658642/DWHPROD1_lmd0_107386_i658642.trc 
+
+/u01/app/oracle/diag/rdbms/dwhprod/DWHPROD1/trace/DWHPROD1_lmd1_107398.trc 
+Incident details in: /u01/app/oracle/diag/rdbms/dwhprod/DWHPROD1/incident/incdir_658675/DWHPROD1_lmd1_107398_i658675.trc 
+
+
+2.) Provide the following file: 
+DWHPROD2_ora_389513_i400744.trc 
+
+3.) Please provide the output of the following query connected as sysdba for both instances: 
+
+spool memory.lst 
+set pagesize 200 
+col component for a25 
+col oper_type for a8 
+set numw 20 
+alter session set nls_date_format='dd-mm-yyyy:hh24:mi:ss'; 
+select sysdate,instance_name from v$instance; 
+select start_time,end_time,component, oper_type, initial_size, target_size,final_size,status 
+from v$sga_resize_ops 
+order by start_time; 
+COL COMPONENT FORMAT A25 
+COL FINAL_SIZE FORMAT A15 
+select component, AVG(FINAL_SIZE) "AVG FINAL", MEDIAN(FINAL_SIZE) "MEDIAN FINAL", MAX(FINAL_SIZE) "MAX FINAL" 
+from v$sga_resize_ops 
+group by component; 
+select * from v$sga_dynamic_components; 
+select * from v$sga_dynamic_free_memory; 
+select * from v$sgastat 
+where pool = 'shared pool' 
+order by bytes desc; 
+select pool, sum(bytes)/1024/1024 from v$sgastat 
+group by pool; 
+
+select x.ksppinm 
+, y.ksppstvl 
+from x$ksppi x 
+, x$ksppcv y 
+where x.indx = y.indx 
+and x.ksppinm like '\_kghdsidx_count%' escape '\' 
+order by x.ksppinm; 
+
+select pool, sum(bytes)/1024/1024 from v$sgastat 
+group by pool; 
+select x.ksppinm 
+, y.ksppstvl 
+from x$ksppi x 
+, x$ksppcv y 
+where x.indx = y.indx 
+and x.ksppinm like '\__memory_imm_mode_without_autosga%' escape '\' 
+order by x.ksppinm; 
+
+select nam.ksppinm NAME, 
+val.KSPPSTVL VALUE 
+from x$ksppi nam, 
+x$ksppsv val 
+where nam.indx = val.indx 
+and nam.ksppinm like '%_shared_pool_reserved_pct%'; 
+
+
+select KSMCHIDX "SubPool", sum(ksmchsiz) Bytes 
+from x$ksmsp 
+group by ksmchidx; 
+
+select DSIDX_KSMNWEX "DSIDX", CURDUR_KSMNWEX "DURATION", 
+count(*) "GRANULES", 
+substr('sga heap(' || DSIDX_KSMNWEX || ',' || (CURDUR_KSMNWEX - 1) 
+|| ')',1,20) "HEAP NAME" 
+from X$KSMSP_NWEX 
+group by DSIDX_KSMNWEX, CURDUR_KSMNWEX 
+order by DSIDX_KSMNWEX, CURDUR_KSMNWEX; 
+
+spool off; 
+
+--ORA-4031 due to Huge "ges resource dynamic" and "ges enqueues" and Instance Terminates: ORA-29770: 'SGA: allocation forcing component growth' (Doc ID 1951758.1)	
+Hi, 
+we upload two file that is result of following queries; 
+Regards. 
+
+DWHPROD1_memory2.lst 
+DWHPROD2_memory2.lst 
+
+select pool,name,round(bytes/1024/1024) ,con_id from v$sgastat where round(bytes/1024/1024)>10 and rownum<10 order by 3 desc; 
+
+select substr(RESOURCE_NAME1,instr(RESOURCE_NAME1,'[',1,3)+1,2) TYPE, count(*) from v$ges_enqueue group by substr(RESOURCE_NAME1,instr(RESOURCE_NAME1,'[',1,3)+1,2) order by 2 desc; 
+
+SELECT substr(RESOURCE_NAME1,instr(RESOURCE_NAME1,'[',1,3)+1,2) TYPE, grant_level, request_level, count(*) FROM v$ges_enqueue group by substr(RESOURCE_NAME1,instr(RESOURCE_NAME1,'[',1,3)+1,2), grant_level, request_level order by 4 desc; 
+
+ 	 
+   
